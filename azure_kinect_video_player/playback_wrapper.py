@@ -1,15 +1,14 @@
-import os
-import subprocess
-import platform
 import json
+import os
+import platform
+import subprocess
 import sys
-from pathlib import Path
-from pprint import pprint
-import cv2
-import numpy as np
 import time
-import typer
+from pathlib import Path
 from typing import Tuple
+
+import numpy as np
+
 
 class AzureKinectPlaybackWrapper:
 	def __init__(self, video_filename: Path, auto_start: bool = True, realtime_wait: bool = True):
@@ -84,10 +83,10 @@ class AzureKinectPlaybackWrapper:
 		# Create other internal variables #
 		###################################
 
-		self._procs = None           # The ffmpeg processes
+		self._procs = None  # The ffmpeg processes
 		self._ready_to_start = True  # Whether the wrapper is ready to start (i.e. the ffmpeg processes have not been created yet)
-		self._start_time = None      # The time the wrapper was started
-		self._current_frame = 0      # The current frame number
+		self._start_time = None  # The time the wrapper was started
+		self._current_frame = 0  # The current frame number
 
 		# Whether to wait for the next frame to be displayed, or skip frames if processing is too slow
 		self._realtime_wait = realtime_wait
@@ -102,12 +101,20 @@ class AzureKinectPlaybackWrapper:
 		"""
 
 		if self._ready_to_start:
-
 			# Create 3 ffmpeg processes for each stream, and store them in self.procs
 			self._procs = [
-				subprocess.Popen(["ffmpeg", "-i", str(self._video_filename), "-map", "0:0", "-f", "image2pipe", "-pix_fmt", "bgr24", "-vcodec", "rawvideo", "-"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=self._colour_byte_size),
-				subprocess.Popen(["ffmpeg", "-i", str(self._video_filename), "-map", "0:1", "-f", "image2pipe", "-pix_fmt", "gray16le", "-vcodec", "rawvideo", "-"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=self._depth_byte_size),
-				subprocess.Popen(["ffmpeg", "-i", str(self._video_filename), "-map", "0:2", "-f", "image2pipe", "-pix_fmt", "gray16le", "-vcodec", "rawvideo", "-"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=self._ir_byte_size)
+				subprocess.Popen(
+					["ffmpeg", "-i", str(self._video_filename), "-map", "0:0", "-f", "image2pipe", "-pix_fmt", "bgr24",
+					 "-vcodec", "rawvideo", "-"], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+					bufsize=self._colour_byte_size),
+				subprocess.Popen(
+					["ffmpeg", "-i", str(self._video_filename), "-map", "0:1", "-f", "image2pipe", "-pix_fmt",
+					 "gray16le", "-vcodec", "rawvideo", "-"], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+					bufsize=self._depth_byte_size),
+				subprocess.Popen(
+					["ffmpeg", "-i", str(self._video_filename), "-map", "0:2", "-f", "image2pipe", "-pix_fmt",
+					 "gray16le", "-vcodec", "rawvideo", "-"], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+					bufsize=self._ir_byte_size)
 			]
 			# Set ready_to_start to False
 			self._ready_to_start = False
@@ -157,7 +164,6 @@ class AzureKinectPlaybackWrapper:
 				# If realtime_wait is True, either wait for the next frame, or skip frames if catching up #
 				###########################################################################################
 
-
 				# Calculate the time that the next frame should be displayed
 				next_frame_time = self._start_time + (self._current_frame / self._frame_rate)
 
@@ -201,8 +207,10 @@ class AzureKinectPlaybackWrapper:
 				break
 
 			# Check if the data is the correct size
-			if len(colour_data) != self._colour_byte_size or len(depth_data) != self._depth_byte_size or len(ir_data) != self._ir_byte_size:
-				sys.stderr.write(f"Warning: Frame size mismatch - Colour: {len(colour_data)} != {self._colour_byte_size}, Depth: {len(depth_data)} != {self._depth_byte_size}, IR: {len(ir_data)} != {self._ir_byte_size}")
+			if len(colour_data) != self._colour_byte_size or len(depth_data) != self._depth_byte_size or len(
+				ir_data) != self._ir_byte_size:
+				sys.stderr.write(
+					f"Warning: Frame size mismatch - Colour: {len(colour_data)} != {self._colour_byte_size}, Depth: {len(depth_data)} != {self._depth_byte_size}, IR: {len(ir_data)} != {self._ir_byte_size}")
 				sys.stderr.flush()
 				break
 
@@ -256,11 +264,11 @@ class AzureKinectPlaybackWrapper:
 
 def _get_stream_info(video_filename: Path) -> dict:
 	# Get the stream info
-	stream_info = subprocess.run(["ffprobe", "-v", "quiet", "-print_format", "json", "-show_format", "-show_streams", str(video_filename)], stdout=subprocess.PIPE).stdout.decode("utf-8")
+	stream_info = subprocess.run(
+		["ffprobe", "-v", "quiet", "-print_format", "json", "-show_format", "-show_streams", str(video_filename)],
+		stdout=subprocess.PIPE).stdout.decode("utf-8")
 
 	# Convert the stream info to a dictionary
 	stream_info = json.loads(stream_info)
 
 	return stream_info
-
-

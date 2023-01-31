@@ -1,9 +1,11 @@
-import typer
-import cv2
-from pathlib import Path
-from azure_kinect_video_player.playback_wrapper import AzureKinectPlaybackWrapper
-import time
 import sys
+import time
+from pathlib import Path
+
+import cv2
+import typer
+
+from azure_kinect_video_player.playback_wrapper import AzureKinectPlaybackWrapper
 
 app = typer.Typer()
 
@@ -11,7 +13,6 @@ app = typer.Typer()
 @app.command()
 def app_main(video_filename: Path = typer.Argument(..., help="The video filename"),
 			 realtime_wait: bool = typer.Option(True, help="Wait for the next frame to be displayed")):
-
 	# Get the video filename from the command line
 	video_filename = Path(video_filename)
 
