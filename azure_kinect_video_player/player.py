@@ -12,17 +12,24 @@ app = typer.Typer()
 
 @app.command()
 def app_main(video_filename: Path = typer.Argument(..., help="The video filename"),
-			 realtime_wait: bool = typer.Option(True, help="Wait for the next frame to be displayed")):
+	         realtime_wait: bool = typer.Option(True, help="Wait for the next frame to be displayed"),
+	         rgb: bool = typer.Option(True, help="Display RGB image"),
+	         depth: bool = typer.Option(True, help="Display depth image"),
+	         ir: bool = typer.Option(True, help="Display IR image")):
+
 	# Get the video filename from the command line
 	video_filename = Path(video_filename)
 
 	# Create the playback wrapper
-	playback_wrapper = AzureKinectPlaybackWrapper(video_filename, realtime_wait=realtime_wait, auto_start=False)
+	playback_wrapper = AzureKinectPlaybackWrapper(video_filename, realtime_wait=realtime_wait, auto_start=False, rgb=rgb, depth=depth, ir=ir)
 
 	# Create windows for the colour, depth, and ir images
-	cv2.namedWindow("Colour", cv2.WINDOW_NORMAL)
-	cv2.namedWindow("Depth", cv2.WINDOW_NORMAL)
-	cv2.namedWindow("IR", cv2.WINDOW_NORMAL)
+	if rgb:
+		cv2.namedWindow("Colour", cv2.WINDOW_NORMAL)
+	if depth:
+		cv2.namedWindow("Depth", cv2.WINDOW_NORMAL)
+	if ir:
+		cv2.namedWindow("IR", cv2.WINDOW_NORMAL)
 
 	# Start timer
 	start_time = time.time()
@@ -31,14 +38,19 @@ def app_main(video_filename: Path = typer.Argument(..., help="The video filename
 	# Loop through the frames
 	for colour_image, depth_image, ir_image in playback_wrapper.grab_frame():
 
-		# Check that the frame is not empty
-		if colour_image is None:
+		# If all images are None, break (probably reached the end of the video)
+		if colour_image is None and depth_image is None and ir_image is None:
 			break
 
 		# Display the colour, depth, and ir images
-		cv2.imshow("Colour", colour_image)
-		cv2.imshow("Depth", depth_image)
-		cv2.imshow("IR", ir_image)
+		if rgb and colour_image is not None:
+			cv2.imshow("Colour", colour_image)
+
+		if depth and depth_image is not None:
+			cv2.imshow("Depth", depth_image)
+
+		if ir and ir_image is not None:
+			cv2.imshow("IR", ir_image)
 
 		# Wait for key press
 		key = cv2.waitKey(1)

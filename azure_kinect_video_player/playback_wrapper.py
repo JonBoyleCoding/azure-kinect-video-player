@@ -5,13 +5,14 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import Tuple
+from typing import Tuple, Optional
 
 import numpy as np
 
 
 class AzureKinectPlaybackWrapper:
-	def __init__(self, video_filename: Path, auto_start: bool = True, realtime_wait: bool = True):
+	def __init__(self, video_filename: Path, auto_start: bool = True, realtime_wait: bool = True,
+		         rgb: bool = True, depth: bool = True, ir:bool = True):
 		"""
 		Playback wrapper for the Azure Kinect video files
 
@@ -91,6 +92,11 @@ class AzureKinectPlaybackWrapper:
 		# Whether to wait for the next frame to be displayed, or skip frames if processing is too slow
 		self._realtime_wait = realtime_wait
 
+		# Whether to return the RGB, depth, and IR streams
+		self._run_rgb = rgb
+		self._run_depth = depth
+		self._run_ir = ir
+
 		# If auto_start, start the wrapper
 		if auto_start:
 			self.start()
@@ -102,20 +108,46 @@ class AzureKinectPlaybackWrapper:
 
 		if self._ready_to_start:
 			# Create 3 ffmpeg processes for each stream, and store them in self.procs
-			self._procs = [
-				subprocess.Popen(
+			# self._procs = [
+			# 	subprocess.Popen(
+			# 		["ffmpeg", "-i", str(self._video_filename), "-map", "0:0", "-f", "image2pipe", "-pix_fmt", "bgr24",
+			# 		 "-vcodec", "rawvideo", "-"], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+			# 		bufsize=self._colour_byte_size),
+			# 	subprocess.Popen(
+			# 		["ffmpeg", "-i", str(self._video_filename), "-map", "0:1", "-f", "image2pipe", "-pix_fmt",
+			# 		 "gray16le", "-vcodec", "rawvideo", "-"], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+			# 		bufsize=self._depth_byte_size),
+			# 	subprocess.Popen(
+			# 		["ffmpeg", "-i", str(self._video_filename), "-map", "0:2", "-f", "image2pipe", "-pix_fmt",
+			# 		 "gray16le", "-vcodec", "rawvideo", "-"], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+			# 		bufsize=self._ir_byte_size)
+			# ]
+
+			self._procs = []
+			if self._run_rgb:
+				self._procs.append(subprocess.Popen(
 					["ffmpeg", "-i", str(self._video_filename), "-map", "0:0", "-f", "image2pipe", "-pix_fmt", "bgr24",
 					 "-vcodec", "rawvideo", "-"], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-					bufsize=self._colour_byte_size),
-				subprocess.Popen(
+					bufsize=self._colour_byte_size))
+			else:
+				self._procs.append(None)
+
+			if self._run_depth:
+				self._procs.append(subprocess.Popen(
 					["ffmpeg", "-i", str(self._video_filename), "-map", "0:1", "-f", "image2pipe", "-pix_fmt",
 					 "gray16le", "-vcodec", "rawvideo", "-"], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-					bufsize=self._depth_byte_size),
-				subprocess.Popen(
+					bufsize=self._depth_byte_size))
+			else:
+				self._procs.append(None)
+
+			if self._run_ir:
+				self._procs.append(subprocess.Popen(
 					["ffmpeg", "-i", str(self._video_filename), "-map", "0:2", "-f", "image2pipe", "-pix_fmt",
 					 "gray16le", "-vcodec", "rawvideo", "-"], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-					bufsize=self._ir_byte_size)
-			]
+					bufsize=self._ir_byte_size))
+			else:
+				self._procs.append(None)
+
 			# Set ready_to_start to False
 			self._ready_to_start = False
 
@@ -125,7 +157,7 @@ class AzureKinectPlaybackWrapper:
 			# Set frame_count to 0
 			self._current_frame = 0
 
-	def grab_frame(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+	def grab_frame(self) -> Tuple[Optional[np.ndarray], Optional[np.ndarray], Optional[np.ndarray]]:
 		"""
 		Grab the next frame from the video file
 
@@ -153,9 +185,9 @@ class AzureKinectPlaybackWrapper:
 				:return: A tuple containing the colour, depth, and IR frames (in that order) as bytes
 				"""
 
-				colour_data = self._procs[0].stdout.read(self._colour_byte_size)
-				depth_data = self._procs[1].stdout.read(self._depth_byte_size)
-				ir_data = self._procs[2].stdout.read(self._ir_byte_size)
+				colour_data = self._procs[0].stdout.read(self._colour_byte_size) if self._run_rgb else None
+				depth_data = self._procs[1].stdout.read(self._depth_byte_size) if self._run_depth else None
+				ir_data = self._procs[2].stdout.read(self._ir_byte_size) if self._run_ir else None
 
 				return colour_data, depth_data, ir_data
 
@@ -202,16 +234,12 @@ class AzureKinectPlaybackWrapper:
 			# Error checking #
 			##################
 
-			# Check if any of the data is empty
-			if not colour_data or not depth_data or not ir_data:
-				break
-
 			# Check if the data is the correct size
-			if len(colour_data) != self._colour_byte_size or len(depth_data) != self._depth_byte_size or len(
-				ir_data) != self._ir_byte_size:
-				sys.stderr.write(
-					f"Warning: Frame size mismatch - Colour: {len(colour_data)} != {self._colour_byte_size}, Depth: {len(depth_data)} != {self._depth_byte_size}, IR: {len(ir_data)} != {self._ir_byte_size}")
-				sys.stderr.flush()
+			if (self._run_rgb and len(colour_data) != self._colour_byte_size) or \
+					(self._run_depth and len(depth_data) != self._depth_byte_size) or \
+					(self._run_ir and len(ir_data) != self._ir_byte_size):
+
+				print("Error: The streamed data is not the correct size. This is likely due to a corrupted video file. Aborting...")
 				break
 
 			#################################################
@@ -219,9 +247,10 @@ class AzureKinectPlaybackWrapper:
 			#################################################
 
 			# Convert the data to numpy arrays
-			colour_image = np.frombuffer(colour_data, dtype=np.uint8).reshape((self._colour_size[1], self._colour_size[0], self._colour_size[2]))
-			depth_image = np.frombuffer(depth_data, dtype=np.uint16).reshape((self._depth_size[1], self._depth_size[0]))
-			ir_image = np.frombuffer(ir_data, dtype=np.uint16).reshape((self._ir_size[1], self._ir_size[0]))
+
+			colour_image = np.frombuffer(colour_data, dtype=np.uint8).reshape((self._colour_size[1], self._colour_size[0], self._colour_size[2])) if self._run_rgb else None
+			depth_image = np.frombuffer(depth_data, dtype=np.uint16).reshape((self._depth_size[1], self._depth_size[0])) if self._run_depth else None
+			ir_image = np.frombuffer(ir_data, dtype=np.uint16).reshape((self._ir_size[1], self._ir_size[0])) if self._run_ir else None
 
 			# Return the colour, depth, and ir images
 			yield colour_image, depth_image, ir_image
@@ -242,9 +271,10 @@ class AzureKinectPlaybackWrapper:
 			return
 
 		# Close the streams and kill the processes
-		for _proc in self._procs:
-			_proc.stdout.close()
-			_proc.kill()
+		for proc in self._procs:
+			if proc is not None:
+				proc.stdout.close()
+				proc.kill()
 
 		# Set ready_to_start to True
 		self._ready_to_start = True
