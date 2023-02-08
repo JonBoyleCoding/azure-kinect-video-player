@@ -234,6 +234,12 @@ class AzureKinectPlaybackWrapper:
 			# Error checking #
 			##################
 
+			# Check if the end of the video file has been reached
+			if (self._run_rgb and len(colour_data) == 0) or \
+					(self._run_depth and len(depth_data) == 0) or \
+					(self._run_ir and len(ir_data) == 0):
+				return None, None, None
+
 			# Check if the data is the correct size
 			if (self._run_rgb and len(colour_data) != self._colour_byte_size) or \
 					(self._run_depth and len(depth_data) != self._depth_byte_size) or \
@@ -290,6 +296,12 @@ class AzureKinectPlaybackWrapper:
 		Get the current frame number
 		"""
 		return self._current_frame
+	
+	def get_frame_rate(self):
+		"""
+		Get the frame rate
+		"""
+		return self._frame_rate
 
 
 def _get_stream_info(video_filename: Path) -> dict:
