@@ -118,7 +118,7 @@ def app_main(video_filename: Path = typer.Argument(..., help="The video filename
 			                                ir_image,
 			                                depth_min_max=visualisation_depth_min_max,
 			                                ir_min_max=visualisation_ir_min_max)
-			cv2.imshow("Combined", combined_image)
+			cv2.imshow(f"Combined Kinect Video: [{video_filename.name}]", combined_image)
 
 			if video_writer is not None:
 				video_writer.write_frame(combined_image)
