@@ -1,0 +1,12 @@
+repos:
+- repo: local
+  hooks:
+  -   id: yapf
+      name: yapf
+      entry: yapf
+      language: python
+      'types': [python]
+      args: ["-i", "-vv"]
+      require_serial: false
+      additional_dependencies: [toml]
+      minimum_pre_commit_version: '0'
