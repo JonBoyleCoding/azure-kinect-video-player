@@ -4,7 +4,7 @@ This project contains a wrapper and a simple player for playing back Azure Kinec
 
 ## Installation instructions
 
-You can either install the package [into your system](#install-the-player-and-the-module-into-your-system) and use it from there, or [include it in your project](#include-as-a-package-into-your-projct).
+You can either install the package [into your system](#install-the-player-and-the-module-into-your-system) and use it from there, or [include it in your project](#include-as-a-package-into-your-project).
 
 ### Install the player and the module into your system
 
