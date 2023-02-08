@@ -11,7 +11,7 @@ You can either install the package [into your system](#install-the-player-and-th
 You can install the latest version (0.2.1) directly from git into your local user by the following command:
 
 ``` sh
-pip install --upgrade git+https://github.com/JonBoyleCoding/python-azure-kinect-video-player.git@v0.2.1
+pip install --upgrade git+https://github.com/JonBoyleCoding/python-azure-kinect-video-player.git@v0.2.2
 ```
 
 (Note: the `--upgrade` flag is provided to ensure that if you upgrade to a newer version it actually does so)
@@ -24,14 +24,14 @@ If you want the master branch, no need to specify anything after (and including)
 The following example is for the `poetry` package manager.
 
 ``` sh
-poetry add git+https://github.com/JonBoyleCoding/python-azure-kinect-video-player.git#v0.2.1
+poetry add git+https://github.com/JonBoyleCoding/python-azure-kinect-video-player.git#v0.2.2
 ```
 
 To update to a newer version, it is best to remove the package first and reinstall due to an outstanding issue with updating git repositories in `poetry`.
 
 ``` sh
 poetry remove azure-kinect-video-player
-poetry add git+https://github.com/JonBoyleCoding/python-azure-kinect-video-player.git#v0.2.1
+poetry add git+https://github.com/JonBoyleCoding/python-azure-kinect-video-player.git#v0.2.2
 ```
 
 If you want the master branch, no need to specify anything after (and including) the `#`.
