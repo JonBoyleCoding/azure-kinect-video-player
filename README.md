@@ -2,11 +2,11 @@
 
 This project contains a wrapper and a simple player for playing back Azure Kinect recordings. This project does not use the official Azure Kinect SDK, it simply reads the mkv containers recorded by the example application within the SDK.
 
-## Installation instructions
+## Installation Instructions
 
 You can either install the package [into your system](#install-the-player-and-the-module-into-your-system) and use it from there, or [include it in your project](#include-as-a-package-into-your-project).
 
-### Install the player and the module into your system
+### Install the Player and the Module into your System
 
 You can install this directly from git into your local user by the following command:
 
@@ -16,7 +16,7 @@ pip install --upgrade git+https://github.com/JonBoyleCoding/python-azure-kinect-
 
 (Note: the `--upgrade` flag is provided to ensure that if you upgrade to a newer version it actually does so)
 
-### Include as a package into your project
+### Include as a Package into your Project
 
 The following example is for the `poetry` package manager.
 
@@ -31,7 +31,7 @@ poetry remove azure-kinect-video-player
 poetry add git+https://github.com/JonBoyleCoding/python-azure-kinect-video-player.git#v0.2.1
 ```
 
-## Using the player
+## Using the Player
 
 `python-azure-kinect-player [OPTIONS] VIDEO_FILENAME`
 
@@ -53,7 +53,12 @@ Options:
 - `--show-completion [bash|zsh|fish|powershell|pwsh]`: Show completion for the specified shell, to copy it or customize the installation.
 - `--help`: Show this message and exit.
 
-## Using the wrapper
+## Using the Wrapper
+
+This section has the following subsections:
+
+- [Playback Wrapper](#playback-wrapper)
+- [Scaling 16-bit Images](#scaling-16-bit-images)
 
 ### Playback Wrapper
 
@@ -93,7 +98,7 @@ The provided images are in the following format:
 - DEPTH - 16-bit unsigned integer representing millimeter distance of a pixel from the sensor
 - IR - 16-bit image from the IR sensor
 
-### Scaling 16-bit images
+### Scaling 16-bit Images
 
 If you wish to visualise the results, then you may need to convert the 16-bit images to 8-bit and scale the values to a useful range. This module provides a method for this:
 
