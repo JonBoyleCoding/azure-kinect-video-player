@@ -11,8 +11,14 @@ import numpy as np
 
 
 class AzureKinectPlaybackWrapper:
-	def __init__(self, video_filename: Path, auto_start: bool = True, realtime_wait: bool = True,
-		         rgb: bool = True, depth: bool = True, ir:bool = True):
+
+	def __init__(self,
+	             video_filename: Path,
+	             auto_start: bool = True,
+	             realtime_wait: bool = True,
+	             rgb: bool = True,
+	             depth: bool = True,
+	             ir: bool = True):
 		"""
 		Playback wrapper for the Azure Kinect video files
 
@@ -65,8 +71,10 @@ class AzureKinectPlaybackWrapper:
 			raise RuntimeError("Video file must contain at least 3 streams: {}".format(self._video_filename))
 
 		# Get COLOR, DEPTH, and IR width and height
-		self._colour_size = (int(self._stream_info["streams"][0]["width"]), int(self._stream_info["streams"][0]["height"]), 3)
-		self._depth_size = (int(self._stream_info["streams"][1]["width"]), int(self._stream_info["streams"][1]["height"]))
+		self._colour_size = (int(self._stream_info["streams"][0]["width"]),
+		                     int(self._stream_info["streams"][0]["height"]), 3)
+		self._depth_size = (int(self._stream_info["streams"][1]["width"]),
+		                    int(self._stream_info["streams"][1]["height"]))
 		self._ir_size = (int(self._stream_info["streams"][2]["width"]), int(self._stream_info["streams"][2]["height"]))
 
 		# Get the frame rate
@@ -108,43 +116,45 @@ class AzureKinectPlaybackWrapper:
 
 		if self._ready_to_start:
 			# Create 3 ffmpeg processes for each stream, and store them in self.procs
-			# self._procs = [
-			# 	subprocess.Popen(
-			# 		["ffmpeg", "-i", str(self._video_filename), "-map", "0:0", "-f", "image2pipe", "-pix_fmt", "bgr24",
-			# 		 "-vcodec", "rawvideo", "-"], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-			# 		bufsize=self._colour_byte_size),
-			# 	subprocess.Popen(
-			# 		["ffmpeg", "-i", str(self._video_filename), "-map", "0:1", "-f", "image2pipe", "-pix_fmt",
-			# 		 "gray16le", "-vcodec", "rawvideo", "-"], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-			# 		bufsize=self._depth_byte_size),
-			# 	subprocess.Popen(
-			# 		["ffmpeg", "-i", str(self._video_filename), "-map", "0:2", "-f", "image2pipe", "-pix_fmt",
-			# 		 "gray16le", "-vcodec", "rawvideo", "-"], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-			# 		bufsize=self._ir_byte_size)
-			# ]
 
 			self._procs = []
+			
 			if self._run_rgb:
-				self._procs.append(subprocess.Popen(
-					["ffmpeg", "-i", str(self._video_filename), "-map", "0:0", "-f", "image2pipe", "-pix_fmt", "bgr24",
-					 "-vcodec", "rawvideo", "-"], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-					bufsize=self._colour_byte_size))
+				self._procs.append(
+				    subprocess.Popen([
+				        "ffmpeg", "-i",
+				        str(self._video_filename), "-map", "0:0", "-f", "image2pipe", "-pix_fmt", "bgr24", "-vcodec",
+				        "rawvideo", "-"
+				    ],
+				                     stdout=subprocess.PIPE,
+				                     stderr=subprocess.PIPE,
+				                     bufsize=self._colour_byte_size))
 			else:
 				self._procs.append(None)
 
 			if self._run_depth:
-				self._procs.append(subprocess.Popen(
-					["ffmpeg", "-i", str(self._video_filename), "-map", "0:1", "-f", "image2pipe", "-pix_fmt",
-					 "gray16le", "-vcodec", "rawvideo", "-"], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-					bufsize=self._depth_byte_size))
+				self._procs.append(
+				    subprocess.Popen([
+				        "ffmpeg", "-i",
+				        str(self._video_filename), "-map", "0:1", "-f", "image2pipe", "-pix_fmt", "gray16le", "-vcodec",
+				        "rawvideo", "-"
+				    ],
+				                     stdout=subprocess.PIPE,
+				                     stderr=subprocess.PIPE,
+				                     bufsize=self._depth_byte_size))
 			else:
 				self._procs.append(None)
 
 			if self._run_ir:
-				self._procs.append(subprocess.Popen(
-					["ffmpeg", "-i", str(self._video_filename), "-map", "0:2", "-f", "image2pipe", "-pix_fmt",
-					 "gray16le", "-vcodec", "rawvideo", "-"], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-					bufsize=self._ir_byte_size))
+				self._procs.append(
+				    subprocess.Popen([
+				        "ffmpeg", "-i",
+				        str(self._video_filename), "-map", "0:2", "-f", "image2pipe", "-pix_fmt", "gray16le", "-vcodec",
+				        "rawvideo", "-"
+				    ],
+				                     stdout=subprocess.PIPE,
+				                     stderr=subprocess.PIPE,
+				                     bufsize=self._ir_byte_size))
 			else:
 				self._procs.append(None)
 
@@ -236,16 +246,18 @@ class AzureKinectPlaybackWrapper:
 
 			# Check if the end of the video file has been reached
 			if (self._run_rgb and len(colour_data) == 0) or \
-					(self._run_depth and len(depth_data) == 0) or \
-					(self._run_ir and len(ir_data) == 0):
+              (self._run_depth and len(depth_data) == 0) or \
+              (self._run_ir and len(ir_data) == 0):
 				return None, None, None
 
 			# Check if the data is the correct size
 			if (self._run_rgb and len(colour_data) != self._colour_byte_size) or \
-					(self._run_depth and len(depth_data) != self._depth_byte_size) or \
-					(self._run_ir and len(ir_data) != self._ir_byte_size):
+              (self._run_depth and len(depth_data) != self._depth_byte_size) or \
+              (self._run_ir and len(ir_data) != self._ir_byte_size):
 
-				print("Error: The streamed data is not the correct size. This is likely due to a corrupted video file. Aborting...")
+				print(
+				    "Error: The streamed data is not the correct size. This is likely due to a corrupted video file. Aborting..."
+				)
 				break
 
 			#################################################
@@ -254,9 +266,12 @@ class AzureKinectPlaybackWrapper:
 
 			# Convert the data to numpy arrays
 
-			colour_image = np.frombuffer(colour_data, dtype=np.uint8).reshape((self._colour_size[1], self._colour_size[0], self._colour_size[2])) if self._run_rgb else None
-			depth_image = np.frombuffer(depth_data, dtype=np.uint16).reshape((self._depth_size[1], self._depth_size[0])) if self._run_depth else None
-			ir_image = np.frombuffer(ir_data, dtype=np.uint16).reshape((self._ir_size[1], self._ir_size[0])) if self._run_ir else None
+			colour_image = np.frombuffer(colour_data, dtype=np.uint8).reshape(
+			    (self._colour_size[1], self._colour_size[0], self._colour_size[2])) if self._run_rgb else None
+			depth_image = np.frombuffer(depth_data, dtype=np.uint16).reshape(
+			    (self._depth_size[1], self._depth_size[0])) if self._run_depth else None
+			ir_image = np.frombuffer(ir_data, dtype=np.uint16).reshape(
+			    (self._ir_size[1], self._ir_size[0])) if self._run_ir else None
 
 			# Return the colour, depth, and ir images
 			yield colour_image, depth_image, ir_image
@@ -296,7 +311,7 @@ class AzureKinectPlaybackWrapper:
 		Get the current frame number
 		"""
 		return self._current_frame
-	
+
 	def get_frame_rate(self):
 		"""
 		Get the frame rate
@@ -307,8 +322,9 @@ class AzureKinectPlaybackWrapper:
 def _get_stream_info(video_filename: Path) -> dict:
 	# Get the stream info
 	stream_info = subprocess.run(
-		["ffprobe", "-v", "quiet", "-print_format", "json", "-show_format", "-show_streams", str(video_filename)],
-		stdout=subprocess.PIPE).stdout.decode("utf-8")
+	    ["ffprobe", "-v", "quiet", "-print_format", "json", "-show_format", "-show_streams",
+	     str(video_filename)],
+	    stdout=subprocess.PIPE).stdout.decode("utf-8")
 
 	# Convert the stream info to a dictionary
 	stream_info = json.loads(stream_info)

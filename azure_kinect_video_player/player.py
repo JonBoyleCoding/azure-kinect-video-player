@@ -16,22 +16,28 @@ app = typer.Typer()
 
 @app.command()
 def app_main(video_filename: Path = typer.Argument(..., help="The video filename"),
-	         realtime_wait: bool = typer.Option(True, help="Wait for the next frame to be displayed"),
-	         rgb: bool = typer.Option(True, help="Display RGB image"),
-	         depth: bool = typer.Option(True, help="Display depth image"),
-	         ir: bool = typer.Option(True, help="Display IR image"),
-	         depth_min: Optional[int] = typer.Option(None, help="Minimum depth value to display"),
-	         depth_max: Optional[int] = typer.Option(None, help="Maximum depth value to display"),
-	         ir_min: Optional[int] = typer.Option(None, help="Minimum IR value to display"),
-	         ir_max: Optional[int] = typer.Option(None, help="Maximum IR value to display"),
-	         save_video: Optional[Path] = typer.Option(None, help="Save video to file (specify filename)"),
-	         display_separate_windows: bool = typer.Option(False, help="Display separate windows for RGB, depth, and IR images")):
+             realtime_wait: bool = typer.Option(True, help="Wait for the next frame to be displayed"),
+             rgb: bool = typer.Option(True, help="Display RGB image"),
+             depth: bool = typer.Option(True, help="Display depth image"),
+             ir: bool = typer.Option(True, help="Display IR image"),
+             depth_min: Optional[int] = typer.Option(None, help="Minimum depth value to display"),
+             depth_max: Optional[int] = typer.Option(None, help="Maximum depth value to display"),
+             ir_min: Optional[int] = typer.Option(None, help="Minimum IR value to display"),
+             ir_max: Optional[int] = typer.Option(None, help="Maximum IR value to display"),
+             save_video: Optional[Path] = typer.Option(None, help="Save video to file (specify filename)"),
+             display_separate_windows: bool = typer.Option(
+                 False, help="Display separate windows for RGB, depth, and IR images")):
 
 	# Get the video filename from the command line
 	video_filename = Path(video_filename)
 
 	# Create the playback wrapper
-	playback_wrapper = AzureKinectPlaybackWrapper(video_filename, realtime_wait=realtime_wait, auto_start=False, rgb=rgb, depth=depth, ir=ir)
+	playback_wrapper = AzureKinectPlaybackWrapper(video_filename,
+	                                              realtime_wait=realtime_wait,
+	                                              auto_start=False,
+	                                              rgb=rgb,
+	                                              depth=depth,
+	                                              ir=ir)
 
 	# Create windows for the colour, depth, and ir images
 	if display_separate_windows:
@@ -75,17 +81,17 @@ def app_main(video_filename: Path = typer.Argument(..., help="The video filename
 	# Set the calculated mins/maxes to 0
 	calculated_depth_min_max = (65535, 0)
 	calculated_ir_min_max = (65535, 0)
-	
-	video_writer = None
 
+	video_writer = None
 
 	try:
 		# Loop through the frames
 		for colour_image, depth_image, ir_image in playback_wrapper.grab_frame():
-			
+
 			# If we're saving the video, create the video writer
 			if save_video is not None and video_writer is None:
-				video_writer = initialise_video_writer(save_video, playback_wrapper.get_frame_rate(), colour_image, depth_image, ir_image)
+				video_writer = initialise_video_writer(save_video, playback_wrapper.get_frame_rate(), colour_image,
+				                                       depth_image, ir_image)
 
 			# If all images are None, break (probably reached the end of the video)
 			if colour_image is None and depth_image is None and ir_image is None:
@@ -96,15 +102,22 @@ def app_main(video_filename: Path = typer.Argument(..., help="The video filename
 			if depth_image is not None:
 				calculated_depth_min_max = update_min_max(depth_image, calculated_depth_min_max)
 
-				visualisation_depth_min_max = update_visual_min_max("Depth", calculated_depth_min_max, visualisation_depth_min_max, determine_depth_min, determine_depth_max)
+				visualisation_depth_min_max = update_visual_min_max("Depth", calculated_depth_min_max,
+				                                                    visualisation_depth_min_max, determine_depth_min,
+				                                                    determine_depth_max)
 
 			if ir_image is not None:
 				calculated_ir_min_max = update_min_max(ir_image, calculated_ir_min_max)
 
-				visualisation_ir_min_max = update_visual_min_max("IR", calculated_ir_min_max, visualisation_ir_min_max, determine_ir_min, determine_ir_max)
+				visualisation_ir_min_max = update_visual_min_max("IR", calculated_ir_min_max, visualisation_ir_min_max,
+				                                                 determine_ir_min, determine_ir_max)
 
 			# Combine the images
-			combined_image = combine_images(colour_image, depth_image, ir_image, depth_min_max=visualisation_depth_min_max, ir_min_max=visualisation_ir_min_max)
+			combined_image = combine_images(colour_image,
+			                                depth_image,
+			                                ir_image,
+			                                depth_min_max=visualisation_depth_min_max,
+			                                ir_min_max=visualisation_ir_min_max)
 			cv2.imshow("Combined", combined_image)
 
 			if video_writer is not None:
@@ -155,47 +168,49 @@ def app_main(video_filename: Path = typer.Argument(..., help="The video filename
 	return 0
 
 
-def initialise_video_writer(video_filename: Path, framerate: int, rgb_image: Optional[numpy.ndarray], depth_image: Optional[numpy.ndarray], ir_image: Optional[numpy.ndarray]) -> FFMPEGVideoWriter:
+def initialise_video_writer(video_filename: Path, framerate: int, rgb_image: Optional[numpy.ndarray],
+                            depth_image: Optional[numpy.ndarray],
+                            ir_image: Optional[numpy.ndarray]) -> FFMPEGVideoWriter:
 	width = 0
 	height = 0
 
-	# If all images are present 
+	# If all images are present
 	if rgb_image is not None and depth_image is not None and ir_image is not None:
 		# Set the width to max of rgb or combined depth/ir
 		width = max(rgb_image.shape[1], depth_image.shape[1] + ir_image.shape[1])
-		
+
 		# Set the height to combined height of rgb and one of depth/ir
 		height = rgb_image.shape[0] + max(depth_image.shape[0], ir_image.shape[0])
-	
+
 	# If only rgb and (depth or ir) are present
 	elif rgb_image is not None and (depth_image is not None or ir_image is not None):
 		used_image = depth_image if depth_image is not None else ir_image
-		
+
 		# Width is rgb width
 		width = rgb_image.shape[1]
-		
+
 		# Height is rgb height + depth/ir height
 		height = rgb_image.shape[0] + used_image.shape[0]
 	# If only depth and ir are present
 	elif depth_image is not None and ir_image is not None:
 		# Width is combined depth/ir width
 		width = depth_image.shape[1] + ir_image.shape[1]
-		
+
 		# Height is depth/ir height
 		height = depth_image.shape[0]
 	# If only one image is present
 	else:
 		used_image = rgb_image if rgb_image is not None else depth_image if depth_image is not None else ir_image
-		
+
 		# Width is image width
 		width = used_image.shape[1]
-		
+
 		# Height is image height
 		height = used_image.shape[0]
-	
+
 	# Create the video writer
 	video_writer = FFMPEGVideoWriter(video_filename, framerate=framerate, resolution=(width, height))
-	
+
 	return video_writer
 
 
@@ -230,7 +245,8 @@ def update_min_max(image: numpy.ndarray, min_max: Tuple[int, int]) -> Tuple[int,
 	return min_max
 
 
-def update_visual_min_max(output_str: str, calculated_min_max: Tuple[int, int], min_max: Tuple[int, int], determine_min: bool, determine_max: bool) -> Tuple[int, int]:
+def update_visual_min_max(output_str: str, calculated_min_max: Tuple[int, int], min_max: Tuple[int, int],
+                          determine_min: bool, determine_max: bool) -> Tuple[int, int]:
 	"""
 	Update the min and max values for the visualisation
 
@@ -256,7 +272,11 @@ def update_visual_min_max(output_str: str, calculated_min_max: Tuple[int, int], 
 	return min_max
 
 
-def combine_images(rgb: Optional[numpy.ndarray], depth: Optional[numpy.ndarray], ir: Optional[numpy.ndarray], depth_min_max: Optional[Tuple[int, int]] = None, ir_min_max: Optional[Tuple[int,int]] = None) -> numpy.ndarray:
+def combine_images(rgb: Optional[numpy.ndarray],
+                   depth: Optional[numpy.ndarray],
+                   ir: Optional[numpy.ndarray],
+                   depth_min_max: Optional[Tuple[int, int]] = None,
+                   ir_min_max: Optional[Tuple[int, int]] = None) -> numpy.ndarray:
 	"""
 	Combine the RGB, depth, and IR images into one image
 
@@ -296,7 +316,7 @@ def combine_images(rgb: Optional[numpy.ndarray], depth: Optional[numpy.ndarray],
 		image = numpy.zeros((rgb.shape[0] + depth.shape[0], width, 3), dtype=numpy.uint8)
 
 		# Copy the rgb image to the top of the image (centre it)
-		image[:rgb.shape[0], (width - rgb.shape[1]) // 2: (width - rgb.shape[1]) // 2 + rgb.shape[1]] = rgb
+		image[:rgb.shape[0], (width - rgb.shape[1]) // 2:(width - rgb.shape[1]) // 2 + rgb.shape[1]] = rgb
 
 		# Copy the depth image to the bottom left of the image
 		image[rgb.shape[0]:, :depth.shape[1]] = depth
@@ -317,13 +337,16 @@ def combine_images(rgb: Optional[numpy.ndarray], depth: Optional[numpy.ndarray],
 		used_image = cv2.cvtColor(used_image, cv2.COLOR_GRAY2BGR)
 
 		# Create a new image
-		image = numpy.zeros((rgb.shape[0] + used_image.shape[0], max(rgb.shape[1], used_image.shape[1]), 3), dtype=numpy.uint8)
+		image = numpy.zeros((rgb.shape[0] + used_image.shape[0], max(rgb.shape[1], used_image.shape[1]), 3),
+		                    dtype=numpy.uint8)
 
 		# Copy the rgb image to the top of the image
-		image[:rgb.shape[0], (image.shape[1] - rgb.shape[1]) // 2: (image.shape[1] - rgb.shape[1]) // 2 + rgb.shape[1]] = rgb
+		image[:rgb.shape[0],
+		      (image.shape[1] - rgb.shape[1]) // 2:(image.shape[1] - rgb.shape[1]) // 2 + rgb.shape[1]] = rgb
 
 		# Copy the depth or ir image to the bottom of the image
-		image[rgb.shape[0]:, (image.shape[1] - used_image.shape[1]) // 2: (image.shape[1] - used_image.shape[1]) // 2 + used_image.shape[1]] = used_image
+		image[rgb.shape[0]:, (image.shape[1] - used_image.shape[1]) // 2:(image.shape[1] - used_image.shape[1]) // 2 +
+		      used_image.shape[1]] = used_image
 
 		return image
 
