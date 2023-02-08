@@ -8,13 +8,16 @@ You can either install the package [into your system](#install-the-player-and-th
 
 ### Install the Player and the Module into your System
 
-You can install this directly from git into your local user by the following command:
+You can install the latest version (0.2.1) directly from git into your local user by the following command:
 
 ``` sh
 pip install --upgrade git+https://github.com/JonBoyleCoding/python-azure-kinect-video-player.git@v0.2.1
 ```
 
 (Note: the `--upgrade` flag is provided to ensure that if you upgrade to a newer version it actually does so)
+
+If you want the master branch, no need to specify anything after (and including) the `@`.
+
 
 ### Include as a Package into your Project
 
@@ -30,6 +33,8 @@ To update to a newer version, it is best to remove the package first and reinsta
 poetry remove azure-kinect-video-player
 poetry add git+https://github.com/JonBoyleCoding/python-azure-kinect-video-player.git#v0.2.1
 ```
+
+If you want the master branch, no need to specify anything after (and including) the `#`.
 
 ## Using the Player
 
