@@ -17,9 +17,4 @@ requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
-azure-kinect-player = "azure_kinect_video_player.player:app"
-
-[tool.yapf]
-based_on_style = "google"
-use_tabs = true
-column_limit = 120
+python-azure-kinect-player = "azure_kinect_video_player.player:app"
