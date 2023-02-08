@@ -25,6 +25,9 @@ class AzureKinectPlaybackWrapper:
 		:param video_filename: The Kinect video filename
 		:param auto_start: Automatically start the playback wrapper (otherwise, call start() to start)
 		:param realtime_wait: Wait for the next frame to be displayed, or skip frames if processing is too slow
+		:param rgb: Whether to load the RGB image
+		:param depth: Whether to load the depth image
+		:param ir: Whether to load the IR image
 		"""
 
 		##################################################
@@ -118,7 +121,7 @@ class AzureKinectPlaybackWrapper:
 			# Create 3 ffmpeg processes for each stream, and store them in self.procs
 
 			self._procs = []
-			
+
 			if self._run_rgb:
 				self._procs.append(
 				    subprocess.Popen([

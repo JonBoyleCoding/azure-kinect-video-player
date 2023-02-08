@@ -1,5 +1,8 @@
 # Python Azure Kinect Video Player Release notes
 
+## 0.2.1
+
+- Added information on installation and usage to the readme
 
 ## 0.2.0
 
