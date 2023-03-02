@@ -128,6 +128,15 @@ class AzureKinectPlaybackWrapper:
 
 			self._procs = []
 
+			# STDERR needs to be piped to /dev/null (or equivalent), otherwise ffmpeg will print a lot of warnings
+			null_pipe_f = None
+			if platform.system() == "Windows":
+				null_pipe_f = "NUL"
+			else:
+				null_pipe_f = "/dev/null"
+
+			self.null_pipe = open(null_pipe_f, "w")
+
 			if self._run_rgb:
 				self._procs.append(
 				    subprocess.Popen([
@@ -136,7 +145,7 @@ class AzureKinectPlaybackWrapper:
 				        "rawvideo", "-"
 				    ],
 				                     stdout=subprocess.PIPE,
-				                     stderr=None,
+				                     stderr=self.null_pipe,
 				                     bufsize=self._colour_byte_size))
 			else:
 				self._procs.append(None)
@@ -149,7 +158,7 @@ class AzureKinectPlaybackWrapper:
 				        "rawvideo", "-"
 				    ],
 				                     stdout=subprocess.PIPE,
-				                     stderr=None,
+				                     stderr=self.null_pipe,
 				                     bufsize=self._depth_byte_size))
 			else:
 				self._procs.append(None)
@@ -162,7 +171,7 @@ class AzureKinectPlaybackWrapper:
 				        "rawvideo", "-"
 				    ],
 				                     stdout=subprocess.PIPE,
-				                     stderr=None,
+				                     stderr=self.null_pipe,
 				                     bufsize=self._ir_byte_size))
 			else:
 				self._procs.append(None)
@@ -299,6 +308,8 @@ class AzureKinectPlaybackWrapper:
 		# Check that start() has been called
 		if self._ready_to_start:
 			return
+
+		self.null_pipe.close()
 
 		# Close the streams and kill the processes
 		for proc in self._procs:
