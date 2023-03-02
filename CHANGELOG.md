@@ -1,5 +1,9 @@
 # Python Azure Kinect Video Player Release notes
 
+## 0.2.3
+
+- Replaced FFMPEG stderr pipe with None to avoid blocking on Windows
+
 ## 0.2.2
 
 - Fixed OpenCV window display of combination viewer (created 2 windows by accident)
