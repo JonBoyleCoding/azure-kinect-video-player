@@ -36,18 +36,24 @@ class AzureKinectPlaybackWrapper:
 
 		# If windows, use where
 		if platform.system() == "Windows":
-			ffmpeg_path = subprocess.run(["where", "ffmpeg"], stdout=subprocess.PIPE).stdout.decode("utf-8").strip()
+			self.ffmpeg_path = subprocess.run(["where", "ffmpeg"], stdout=subprocess.PIPE).stdout.decode("utf-8").strip()
+
+			# Check if multiple ffmpeg paths are found. If one is ImageMagick, use the other. Otherwise, choose the first one.
+			if len(self.ffmpeg_path.splitlines()) > 1:
+				self.ffmpeg_path = [x for x in self.ffmpeg_path.splitlines() if "ImageMagick" not in x][0]
 
 		# If linux or mac, use which
 		elif platform.system() == "Linux" or platform.system() == "Darwin":
-			ffmpeg_path = subprocess.run(["which", "ffmpeg"], stdout=subprocess.PIPE).stdout.decode("utf-8").strip()
+			self.ffmpeg_path = subprocess.run(["which", "ffmpeg"], stdout=subprocess.PIPE).stdout.decode("utf-8").strip()
 
 		# If not windows, linux, or mac, raise an error
 		else:
 			raise RuntimeError("Unknown platform: {}".format(platform.system()))
 
+		print(f"Found FFMPEG at : {self.ffmpeg_path}")
+
 		# If ffmpeg is not found, raise an error
-		if not os.path.exists(ffmpeg_path):
+		if not os.path.exists(self.ffmpeg_path):
 			raise RuntimeError("Unable to find ffmpeg in the path. Please install ffmpeg and add it to the path.")
 
 		#########################################################
@@ -125,12 +131,12 @@ class AzureKinectPlaybackWrapper:
 			if self._run_rgb:
 				self._procs.append(
 				    subprocess.Popen([
-				        "ffmpeg", "-i",
+				        self.ffmpeg_path, "-i",
 				        str(self._video_filename), "-map", "0:0", "-f", "image2pipe", "-pix_fmt", "bgr24", "-vcodec",
 				        "rawvideo", "-"
 				    ],
 				                     stdout=subprocess.PIPE,
-				                     stderr=subprocess.PIPE,
+				                     stderr=None,
 				                     bufsize=self._colour_byte_size))
 			else:
 				self._procs.append(None)
@@ -138,12 +144,12 @@ class AzureKinectPlaybackWrapper:
 			if self._run_depth:
 				self._procs.append(
 				    subprocess.Popen([
-				        "ffmpeg", "-i",
+				        self.ffmpeg_path, "-i",
 				        str(self._video_filename), "-map", "0:1", "-f", "image2pipe", "-pix_fmt", "gray16le", "-vcodec",
 				        "rawvideo", "-"
 				    ],
 				                     stdout=subprocess.PIPE,
-				                     stderr=subprocess.PIPE,
+				                     stderr=None,
 				                     bufsize=self._depth_byte_size))
 			else:
 				self._procs.append(None)
@@ -151,12 +157,12 @@ class AzureKinectPlaybackWrapper:
 			if self._run_ir:
 				self._procs.append(
 				    subprocess.Popen([
-				        "ffmpeg", "-i",
+				        self.ffmpeg_path, "-i",
 				        str(self._video_filename), "-map", "0:2", "-f", "image2pipe", "-pix_fmt", "gray16le", "-vcodec",
 				        "rawvideo", "-"
 				    ],
 				                     stdout=subprocess.PIPE,
-				                     stderr=subprocess.PIPE,
+				                     stderr=None,
 				                     bufsize=self._ir_byte_size))
 			else:
 				self._procs.append(None)
