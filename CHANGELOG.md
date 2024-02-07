@@ -1,5 +1,10 @@
 # Python Azure Kinect Video Player Release notes
 
+## 0.2.5
+
+- Updated dependencies
+- Add Nix Flake
+
 ## 0.2.4
 
 - Replaced FFMPEG stderr pipe to "/dev/null" on Linux/Mac and "NUL" on Windows

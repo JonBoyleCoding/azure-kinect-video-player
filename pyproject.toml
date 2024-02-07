@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "azure-kinect-video-player"
-version = "0.2.4"
+version = "0.2.5"
 description = ""
 authors = ["Jonathan Boyle <j.n.boyle@reading.ac.uk>"]
 
